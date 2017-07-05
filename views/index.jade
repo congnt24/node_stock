@@ -1,51 +1,52 @@
 extends layout
 
 block content
-  div#container(style="height: 400px; min-width: 310px")
+    div#container(style="height: 400px; min-width: 310px")
 
 
-  div
-      input#symbol(type='text' placeholder='symbol')
-      input#add(type='submit' value='Add')
-      //- var its = items.split(',')
-      div#content
-      if items != undefined
-        for item in items
-            div(style="background-color: #ebebeb;")
-                p= item
-                input(type='submit' value='delete' onclick='$(this).removeChart(\''+item+'\')')
+    div
+        input#symbol(type='text' placeholder='symbol')
+        input#add(type='submit' value='Add')
+        //- var its = items.split(',')
+        div#content
+        if items != undefined
+            for item in items
+                div(style="background-color: #ebebeb;")
+                    p= item
+                    input(type='submit' value='delete' onclick='$(this).removeChart(\'' + item + '\')')
 
 
-  script.
-    var symbs = ['']
-      $(function () {
-          var socket = new WebSocket("wss://congntstock.herokuapp.com");
-          socket.onmessage = function (event) {
-              console.log(event.data)
-              var json = JSON.parse(event.data)
-              if (json.type == 'add') {
-                  addChart(json.symbol)
-              } else {
-                  removeChart(json.symbol)
-              }
-          }
+    script.
+        var symbs = ['']
+        $(function () {
+            var socket = new WebSocket("wss://congntstock.herokuapp.com");
+            socket.onmessage = function (event) {
+                console.log(event.data)
+                var json = JSON.parse(event.data)
+                if (json.type == 'add') {
+                    addChart(json.symbol)
+                } else {
+                    removeChart(json.symbol)
+                }
+            }
 
 
-          if ('#{symbols}'!= ''){
-              symbs = '#{symbols}'.split(',');
-          }
+            if ('#{symbols}' != '') {
+                symbs = '#{symbols}'.split(',');
+            }
 
-          var chart = new Highcharts.stockChart('container', {
-              rangeSelector: {
-                  selected: 6
-              },
+            var chart = new Highcharts.stockChart('container', {
+                rangeSelector: {
+                    selected: 6
+                },
 
-              title: {
-                  text: 'Stock Price'
-              },
+                title: {
+                    text: 'Stock Price'
+                },
 
-              series: [{}]
-          });
+                series: [{}]
+            });
+
             function removeChart(data) {
                 for (var i = 0; i < chart.series.length; i++) {
                     if (chart.series[i].name == data) {
@@ -58,61 +59,58 @@ block content
                     }
                 }
             }
+
             //remove
-          $.fn.removeChart = function (sym) {
-              //removeChart(sym)
-              socket.send("{\"type\": \"delete\", \"symbol\": \"" + sym + "\"}")
-          }
+            $.fn.removeChart = function (sym) {
+                //removeChart(sym)
+                socket.send("{\"type\": \"delete\", \"symbol\": \"" + sym + "\"}")
+            }
 
-          if ('!{items}' != '') {
-              var sbs = '!{items}'.split(',')
-              sbs.forEach(function (item) {
-                  $.getJSON('/symbols/' + item, function (data) {
-                      data.forEach(function (dat) {
-                          chart.addSeries({
-                              name: dat.name,
-                              data: dat.data,
-                              tooltip: {
-                                  valueDecimals: 2
-                              }
-                          })
-                      })
-                  });
-              })
+            if ('!{items}' != '') {
+                var sbs = '!{items}'.split(',')
+                $.getJSON('/symbols/' + sbs, function (data) {
+                    data.forEach(function (dat) {
+                        chart.addSeries({
+                            name: dat.name,
+                            data: dat.data,
+                            tooltip: {
+                                valueDecimals: 2
+                            }
+                        })
+                    })
+                });
+            }
 
+            function addChart(sym) {
+                if (symbs.indexOf(sym) == -1) {
+                    symbs.push(sym)
+                    $.getJSON('/symbol/' + sym, function (data) {
+                        chart.addSeries({
+                            name: sym,
+                            data: data,
+                            tooltip: {
+                                valueDecimals: 2
+                            }
+                        })
+                        $('#content').append('<div class="' +
+                            sym +
+                            '" style="background-color: #ebebeb;"><p>' +
+                            sym +
+                            '</p><input type="submit" value="delete" onclick="$(this).removeChart(\'' +
+                            sym +
+                            '\')"/></div>')
+                    });
+                } else {
+                    //alert('You\'re already added this symbol')
+                }
+            }
 
-          }
-
-          function addChart(sym) {
-              if (symbs.indexOf(sym) == -1) {
-                  symbs.push(sym)
-                  $.getJSON('/symbol/' + sym, function (data) {
-                      chart.addSeries({
-                          name: sym,
-                          data: data,
-                          tooltip: {
-                              valueDecimals: 2
-                          }
-                      })
-                      $('#content').append('<div class="' +
-                          sym +
-                          '" style="background-color: #ebebeb;"><p>' +
-                          sym +
-                          '</p><input type="submit" value="delete" onclick="$(this).removeChart(\'' +
-                          sym +
-                          '\')"/></div>')
-                  });
-              } else {
-                  alert('You\'re already added this symbol')
-              }
-          }
-
-          $('#add').on('click', function () {
-              var sym = $('#symbol').val()
-              socket.send("{\"type\": \"add\", \"symbol\": \""+sym+"\"}")
-              //addChart(sym)
-          })
-      })
+            $('#add').on('click', function () {
+                var sym = $('#symbol').val()
+                socket.send("{\"type\": \"add\", \"symbol\": \"" + sym + "\"}")
+                //addChart(sym)
+            })
+        })
 
 
 

@@ -51,14 +51,16 @@ function normalizePort(val) {
 
 
 var wss = new WebSocketServer({ server })
-var wsc
 
 function onMessage(message) {
-    wsc.send(JSON.stringify(JSON.parse(message)))
+  wss.clients.forEach((client) => {
+    if (client.readyState) {
+        client.send(JSON.stringify(JSON.parse(message)))
+    }
+  })
 }
 
 wss.on('connection', function(ws) {
-    wsc = ws
     ws.on('message', onMessage);
     // ws.send('something');
 });
