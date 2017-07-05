@@ -19,6 +19,18 @@ block content
   script.
     var symbs = ['']
       $(function () {
+          var socket = new WebSocket("ws://congntstock.herokuapp.com");
+          socket.onmessage = function (event) {
+              console.log(event.data)
+              var json = JSON.parse(event.data)
+              if (json.type == 'add') {
+                  addChart(json.symbol)
+              } else {
+                  removeChart(json.symbol)
+              }
+          }
+
+
           if ('#{symbols}'!= ''){
               symbs = '#{symbols}'.split(',');
           }
@@ -34,19 +46,22 @@ block content
 
               series: [{}]
           });
+            function removeChart(data) {
+                for (var i = 0; i < chart.series.length; i++) {
+                    if (chart.series[i].name == data) {
+                        chart.series[i].remove()
+                        symbs.splice(symbs.indexOf(data), 1)
+                        $('.' + data).remove()
+                        $.getJSON('/remove/' + data, function (data) {
 
+                        })
+                    }
+                }
+            }
             //remove
-          $.fn.removeChart = function (data) {
-              for (var i = 0; i < chart.series.length; i++) {
-                  if (chart.series[i].name == data) {
-                      chart.series[i].remove()
-                      symbs.splice(symbs.indexOf(data), 1)
-                      $('.'+data).remove()
-                      $.getJSON('/remove/'+data, function (data) {
-
-                      })
-                  }
-              }
+          $.fn.removeChart = function (sym) {
+              //removeChart(sym)
+              socket.send("{\"type\": \"delete\", \"symbol\": \"" + sym + "\"}")
           }
 
           if ('!{items}' != '') {
@@ -68,8 +83,7 @@ block content
 
           }
 
-          $('#add').on('click', function () {
-              var sym = $('#symbol').val()
+          function addChart(sym) {
               if (symbs.indexOf(sym) == -1) {
                   symbs.push(sym)
                   $.getJSON('/symbol/' + sym, function (data) {
@@ -80,7 +94,6 @@ block content
                               valueDecimals: 2
                           }
                       })
-
                       $('#content').append('<div class="' +
                           sym +
                           '" style="background-color: #ebebeb;"><p>' +
@@ -89,9 +102,15 @@ block content
                           sym +
                           '\')"/></div>')
                   });
-              }else{
+              } else {
                   alert('You\'re already added this symbol')
               }
+          }
+
+          $('#add').on('click', function () {
+              var sym = $('#symbol').val()
+              socket.send("{\"type\": \"add\", \"symbol\": \""+sym+"\"}")
+              //addChart(sym)
           })
       })
 

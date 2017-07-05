@@ -7,7 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('node-chart-the-stock:server');
 var http = require('http');
-
+var WebSocketServer = require('uws').Server
 /**
  * Get port from environment and store in Express.
  */
@@ -49,6 +49,21 @@ function normalizePort(val) {
   return false;
 }
 
+
+var wss = new WebSocketServer({ server })
+var wsc
+
+function onMessage(message) {
+    wsc.send(JSON.stringify(JSON.parse(message)))
+}
+
+wss.on('connection', function(ws) {
+    wsc = ws
+    ws.on('message', onMessage);
+    // ws.send('something');
+});
+
+
 /**
  * Event listener for HTTP server "error" event.
  */
@@ -88,3 +103,5 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+
