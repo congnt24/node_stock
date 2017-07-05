@@ -19,7 +19,7 @@ block content
   script.
     var symbs = ['']
       $(function () {
-          var socket = new WebSocket("ws://congntstock.herokuapp.com");
+          var socket = new WebSocket("wss://congntstock.herokuapp.com");
           socket.onmessage = function (event) {
               console.log(event.data)
               var json = JSON.parse(event.data)
