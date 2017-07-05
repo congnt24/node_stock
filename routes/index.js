@@ -49,25 +49,31 @@ router.get('/symbol/:symbol', function (req, res, next) {
         Symbol.all().then(doc =>{
             res.locals.symbols = doc.map(it => it.symbol)
         })
-
-        yahooFinance.historical({
-            symbol: req.params.symbol,
-            from: (new Date()).addDays(-365),
-            to: new Date(),
-            // period: 'd'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
-        }, function (err, quotes) {
-            res.end(JSON.stringify(quotes.map(it => [it.date.getTime(), it.open])))
-        });
     })
+    yahooFinance.historical({
+        symbol: req.params.symbol,
+        from: (new Date()).addDays(-365),
+        to: new Date(),
+        // period: 'd'  // 'd' (daily), 'w' (weekly), 'm' (monthly), 'v' (dividends only)
+    }, function (err, quotes) {
+        res.end(JSON.stringify(quotes.map(it => [it.date.getTime(), it.open])))
+    });
     // res.locals.symbols = Symbol.all().toArray()
 
 })
 
 router.get('/remove/:data', function (req, res, next) {
-    Symbol.delete(req.params.data).then(()=>{
-        Symbol.all().then(doc =>{
-            res.locals.symbols = doc.map(it=>it.symbol)
-        })
+    Symbol.delete(req.params.data).catch((err) => {
+        res.end(JSON.stringify(''))
+    })
+})
+
+router.get('/all', function (req, res, next) {
+    Symbol.all().then(doc =>{
+        res.locals.symbols = doc.map(it=>it.symbol)
+        res.end(JSON.stringify(res.locals.symbols))
+    }).catch((err) => {
+        console.error(err)
     })
 })
 

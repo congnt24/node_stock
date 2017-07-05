@@ -11,7 +11,7 @@ block content
         div#content
         if items != undefined
             for item in items
-                div(style="background-color: #ebebeb;")
+                div(id='#{item}' style="background-color: #ebebeb;")
                     p= item
                     input(type='submit' value='delete' onclick='$(this).removeChart(\'' + item + '\')')
 
@@ -48,11 +48,12 @@ block content
             });
 
             function removeChart(data) {
+                console.log('remove ' + data)
+                $('#' + data).remove()
                 for (var i = 0; i < chart.series.length; i++) {
                     if (chart.series[i].name == data) {
                         chart.series[i].remove()
-                        symbs.splice(symbs.indexOf(data), 1)
-                        $('.' + data).remove()
+                        //symbs.splice(symbs.indexOf(data), 1)
                         $.getJSON('/remove/' + data, function (data) {
 
                         })
@@ -82,27 +83,27 @@ block content
             }
 
             function addChart(sym) {
-                if (symbs.indexOf(sym) == -1) {
-                    symbs.push(sym)
-                    $.getJSON('/symbol/' + sym, function (data) {
-                        chart.addSeries({
-                            name: sym,
-                            data: data,
-                            tooltip: {
-                                valueDecimals: 2
-                            }
-                        })
-                        $('#content').append('<div class="' +
-                            sym +
-                            '" style="background-color: #ebebeb;"><p>' +
-                            sym +
-                            '</p><input type="submit" value="delete" onclick="$(this).removeChart(\'' +
-                            sym +
-                            '\')"/></div>')
-                    });
-                } else {
-                    //alert('You\'re already added this symbol')
+                for (var i = 0; i < chart.series.length; i++) {
+                    if (chart.series[i].name == sym) {
+                        return
+                    }
                 }
+                $.getJSON('/symbol/' + sym, function (data) {
+                    chart.addSeries({
+                        name: sym,
+                        data: data,
+                        tooltip: {
+                            valueDecimals: 2
+                        }
+                    })
+                    $('#content').append('<div id="' +
+                        sym +
+                        '" style="background-color: #ebebeb;"><p>' +
+                        sym +
+                        '</p><input type="submit" value="delete" onclick="$(this).removeChart(\'' +
+                        sym +
+                        '\')"/></div>')
+                });
             }
 
             $('#add').on('click', function () {
